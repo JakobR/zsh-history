@@ -8,7 +8,7 @@ import System.Exit (exitFailure, exitSuccess)
 import qualified Data.ByteString as B
 
 -- zsh-history
-import Zsh.History.Parser
+import Zsh.History
 
 
 main :: IO ()
