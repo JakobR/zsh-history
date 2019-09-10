@@ -44,6 +44,9 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - zsh-history
+    - bytestring
+    - optparse-applicative
+    - time
 
 tests:
   zsh-history-test:
