@@ -22,7 +22,7 @@ command.
 : 1568116618:0;cat .zsh_history | tail -n 20
 : 1568116638:0;echo 'hello\\noo'\\ 
 : 1568116641:0;cat .zsh_history | tail -n 20
-: 1568116681:0;echo hello\\
+: 1568116681:0;echo hello this is hopefully not ambiguous...\\
 : 1568116554:0;ll
 : 1568116687:0;cat .zsh_history | tail -n 20
 : 1568116722:0;cat .zsh_history | tail -n 50 | xxd
