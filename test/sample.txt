@@ -1,0 +1,45 @@
+: 1568097620:0;cd zsh-history
+: 1568097621:0;git st
+: 1568097622:0;git init
+: 1568097623:0;git st
+: 1568097624:0;ll
+: 1568097632:0;m package.yaml
+: 1568106729:0;ll
+: 1568106732:0;cd kb
+: 1568111890:0;cd .dotfiles
+: 1568115494:0;cd code/
+: 1568115495:0;ll
+: 1568115506:0;..
+: 1568115506:0;ll
+: 1568115643:0;cd code/zsh-history
+: 1568116554:0;ll
+: 1568116568:0;echo hello\\
+this\\
+is a multiline\\
+command.
+: 1568116575:0;cat .zsh_history
+: 1568116612:0;echo 'hello\noo'
+: 1568116618:0;cat .zsh_history | tail -n 20
+: 1568116638:0;echo 'hello\\noo'\\ 
+: 1568116641:0;cat .zsh_history | tail -n 20
+: 1568116681:0;echo hello\\
+: 1568116554:0;ll
+: 1568116687:0;cat .zsh_history | tail -n 20
+: 1568116722:0;cat .zsh_history | tail -n 50 | xxd
+: 1568116787:0;echo 'hello\\noo' \\ 
+: 1568116799:0;cat .zsh_history | tail -n 50 | xxd
+: 1568116817:0;ll
+: 1568116840:0;ec src/Zsh/History/Parser.hs
+: 1568117188:0;env
+: 1568117197:0;env | ag extended
+: 1568117208:0;echo $EXTENDED_HISTORY
+: 1568117349:0;setopt
+: 1568117817:0;stack ghci
+: 1568118459:0;cat .zsh_history | tail -n 50
+: 1568118616:0;echo \\\\ 
+: 1568118623:0;echo \\\\\\ 
+: 1568118625:0;echo \\\\\\\\ 
+: 1568118628:0;echo \\\\\\\\\\
+x
+: 1568118630:0;cat .zsh_history | tail -n 50
+: 1568118665:0;cat .zsh_history | tail -n 50 > test.txt
