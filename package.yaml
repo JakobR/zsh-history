@@ -1,0 +1,48 @@
+name:                zsh-history
+version:             0.1.0.0
+github:              "JakobR/zsh-history"
+license:             GPL-3.0-or-later
+author:              "Jakob Rath"
+maintainer:          "git@jakobrath.eu"
+copyright:           "Copyright: (c) 2019 Jakob Rath"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/JakobR/zsh-history#readme>
+
+dependencies:
+- base >= 4.12 && < 5
+- attoparsec
+
+library:
+  source-dirs: src
+
+executables:
+  zsh-history:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - zsh-history
+
+tests:
+  zsh-history-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - zsh-history
