@@ -70,8 +70,9 @@ Each entry has three values:
 - Command
 
 Notes:
-- Line continuations in multi-line commands are indicated by double
-  backslashes ("\\") before the newline character.
+- Line continuations in multi-line commands are generally indicated by
+  double backslashes ("\\") before the newline character.
+- However, older versions of zsh used just a single backslash ("\")
 - If a command ends in double backslashes, zsh will disambiguate by
   adding a space between the double backslashes and the newline before
   writing the command to the history file
@@ -86,8 +87,8 @@ commandP = scan 0 f <* char '\n'
     f :: Int -> Char -> Maybe Int
     f n '\\' = Just $! n + 1
     f n '\n'
-      -- newline means continuation if preceded by double backslash, otherwise end of command
-      | n >= 2    = Just 0
+      -- newline means continuation if preceded by backslash, otherwise end of command
+      | n >= 1    = Just 0
       | otherwise = Nothing
     f _ _ = Just 0
 

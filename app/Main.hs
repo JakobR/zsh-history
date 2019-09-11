@@ -71,6 +71,7 @@ renderEntryText tz e =
   Builder.stringUtf8 (formatTime (error "bug: no locale set") "%Y-%m-%d %H:%M:%S" (entryLocalTime e))
   <> " (" <> Builder.word64Dec (duration e) <> "s) "
   <> Builder.stringUtf8 (show $ Zsh.History.command e)
+  <> "\n"
   where
     entryLocalTime = utcToZonedTime tz . posixSecondsToUTCTime . fromIntegral . timestamp
 
