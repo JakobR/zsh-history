@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Zsh.History
   ( Entry(..)
   , Command
@@ -6,7 +8,7 @@ module Zsh.History
   , historyP
   , parseHistory
   -- * Formatting
-  , formatEntry
+  , renderEntry
   ) where
 
 -- base
@@ -17,12 +19,18 @@ import Data.Attoparsec.ByteString.Char8
 
 -- bytestring
 import Data.ByteString (ByteString)
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as Builder
 
 
 data Entry = Entry
   { timestamp :: !Word64
+    -- ^ Timestamp when the command was executed
   , duration :: !Word64
+    -- ^ How long the command was running, in seconds
   , command :: !Command
+    -- ^ The zsh command without newline at the end.
+    -- Contains the intermediate newlines for multiline commands.
   }
   deriving Show
 
@@ -99,6 +107,13 @@ parseHistory :: ByteString -> Either String [Entry]
 parseHistory = parseOnly (historyP <* endOfInput)
 
 
-
-formatEntry :: Entry -> ByteString
-formatEntry = error "TODO"
+renderEntry :: Entry -> Builder
+renderEntry e =
+  Builder.char8 ':'
+  <> Builder.char8 ' '
+  <> Builder.word64Dec (timestamp e)
+  <> Builder.char8 ':'
+  <> Builder.word64Dec (duration e)
+  <> Builder.char8 ';'
+  <> Builder.byteString (command e)
+  <> Builder.char8 '\n'

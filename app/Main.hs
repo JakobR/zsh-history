@@ -8,6 +8,8 @@ import System.IO (hPrint, hPutStrLn, stderr, stdin)
 -- bytestring
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Builder as Builder
 
 -- time
 import Data.Time.Clock.POSIX
@@ -35,9 +37,17 @@ mainFormat :: Bool -> FormatOptions -> IO ()
 mainFormat _isDebug options = do
   inputData <- readInput (input options)
   inputHistory <- abortOnLeft (parseHistory inputData)
+  printHistory (format options) inputHistory
 
+printHistory :: OutputFormat -> [Entry] -> IO ()
+printHistory TextOutputFormat history = do
   tz <- getCurrentTimeZone
-  forM_ inputHistory (putStrLn . formatEntryText tz)
+  forM_ history (putStrLn . formatEntryText tz)
+printHistory ZshOutputFormat history = do
+  let rendered = mconcat (renderEntry <$> history)
+  BL.putStr (Builder.toLazyByteString rendered)
+printHistory JSONOutputFormat _history = do
+  abortWithError "not yet implemented"
 
 
 formatEntryText :: TimeZone -> Entry -> String

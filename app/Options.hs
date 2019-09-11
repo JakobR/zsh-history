@@ -3,6 +3,9 @@
 
 module Options where
 
+-- base
+import Data.List (intercalate)
+
 -- optparse-applicative
 import Options.Applicative hiding (command)
 import qualified Options.Applicative
@@ -18,9 +21,6 @@ data Command
   -- | Merge !MergeOptions
   deriving Show
 
--- TODO: Add option "--format [text|zsh|json|...]" so this command is actually useful
---       for something other than testing.
---       Default should be "text".
 -- TODO: Add option "--sort" (simply sort by timestamp)
 -- TODO: Add option "--dedup" (so we don't actually need a separate dedup command)
 --       Keeps latest of duplicate entry (according to order in the files;
@@ -28,6 +28,7 @@ data Command
 -- TODO: Add option "--filter-regex"? might be useful because grep doesn't properly work with multiline commands
 data FormatOptions = FormatOptions
   { input :: !Input
+  , format :: !OutputFormat
   }
   deriving Show
 
@@ -35,6 +36,12 @@ data Input
   = Stdin
   | File !FilePath
   deriving Show
+
+data OutputFormat
+  = TextOutputFormat
+  | ZshOutputFormat
+  | JSONOutputFormat
+  deriving (Show, Bounded, Enum)
 
 
 readInputOptionValue :: ReadM Input
@@ -45,8 +52,30 @@ readInputOptionValue = do
     _ -> pure (File path)
 
 
+readOutputFormatOptionValue :: String -> Maybe OutputFormat
+readOutputFormatOptionValue "text" = Just TextOutputFormat
+readOutputFormatOptionValue "zsh"  = Just ZshOutputFormat
+readOutputFormatOptionValue "json" = Just JSONOutputFormat
+readOutputFormatOptionValue _ = Nothing
+
+
+showOutputFormatOptionValue :: OutputFormat -> String
+showOutputFormatOptionValue TextOutputFormat = "text"
+showOutputFormatOptionValue ZshOutputFormat  = "zsh"
+showOutputFormatOptionValue JSONOutputFormat = "json"
+
+
 formatOptionsParser :: Parser FormatOptions
 formatOptionsParser = do
+  format <-
+    option (maybeReader readOutputFormatOptionValue) $
+    short 'f'
+    <> long "format"
+    <> value TextOutputFormat
+    <> showDefaultWith showOutputFormatOptionValue
+    <> help ("The output format. (values: "
+             <> intercalate ", " (showOutputFormatOptionValue <$> [minBound..maxBound])
+             <> ")")
   input <-
     argument readInputOptionValue $
     metavar "INPUT"
