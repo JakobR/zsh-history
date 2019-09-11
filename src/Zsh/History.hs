@@ -33,7 +33,7 @@ data Entry' a = Entry
     -- ^ The zsh command without newline at the end.
     -- Contains the intermediate newlines for multiline commands.
   }
-  deriving (Functor, Show)
+  deriving (Eq, Functor, Show)
 
 
 -- | By default, we use 'ByteString' for commands to be able to work

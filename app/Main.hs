@@ -7,6 +7,7 @@ module Main
 
 -- base
 import Control.Monad
+import Data.Function ((&))
 import Data.List (sortOn)
 import System.Exit (exitFailure)
 import System.IO (hPrint, hPutStrLn, stderr, stdin)
@@ -57,36 +58,49 @@ main = do
     Format opts -> mainFormat isDebug opts
 
 
-
-readHistory :: Input -> IO History
-readHistory input = readInput input >>= abortOnLeft . parseHistory
-
 mainFormat :: Bool -> FormatOptions -> IO ()
-mainFormat _isDebug options = do
-  inputHistory <- readHistory (optInput options)
+mainFormat _isDebug options@FormatOptions{optInputs,optSort} = do
+
+  when (length (filter (==Stdin) optInputs) > 1) $
+    abortWithError "command line argument '-' is allowed at most once"
+
+  when (length optInputs > 1 && not optSort) $
+    hPutStrLn stderr "Warning: multiple inputs without '--sort'. History entries might be out of order."
+
+  inputHistories <- traverse readHistory optInputs
+
   tz <- getCurrentTimeZone
-  let output = cmdFormat options tz inputHistory
-  BL.putStr (Builder.toLazyByteString output)
+
+  let
+    rendered = formatHistories options tz inputHistories
+    output = Builder.toLazyByteString rendered
+
+  BL.putStr output
 
 
-cmdFormat :: FormatOptions -> TimeZone -> History -> Builder
-cmdFormat FormatOptions{optFormat,optSort,optDedup} tz history =
-  renderHistory optFormat tz (processHistory history)
+formatHistories :: FormatOptions -> TimeZone -> [History] -> Builder
+formatHistories FormatOptions{optFormat,optSort,optDedup} tz hs =
+  renderHistory optFormat tz h'
   where
-    processHistory =
-      if' optSort sortHistory
-      . if' optDedup dedupHistory
+    h' =
+      hs
+      & concat
+      & if' optSort sortHistory
+      & if' optDedup dedupHistory
 
     if' :: Bool -> (a -> a) -> (a -> a)
     if' True f = f
     if' False _ = id
 
 
+-- NOTE: be careful to use a stable sort here! (timestamp resolution is only 1s)
 sortHistory :: History -> History
 sortHistory = sortOn timestamp
 
+
 dedupHistory :: History -> History
 dedupHistory = reverse . nubOrdOn command . reverse
+
 
 renderHistory :: Foldable f => OutputFormat -> TimeZone -> f Entry -> Builder
 renderHistory TextOutputFormat tz history = foldMap (renderEntryText tz) history
@@ -102,6 +116,10 @@ renderEntryText tz e =
   <> "\n"
   where
     entryLocalTime = utcToZonedTime tz . posixSecondsToUTCTime . fromIntegral . timestamp
+
+
+readHistory :: Input -> IO History
+readHistory input = readInput input >>= abortOnLeft . parseHistory
 
 
 readInput :: Input -> IO ByteString

@@ -18,12 +18,11 @@ data Options = Options
 
 data Command
   = Format !FormatOptions
-  -- | Merge !MergeOptions
   deriving Show
 
 -- TODO: Add option "--filter-regex"? might be useful because grep doesn't properly work with multiline commands
 data FormatOptions = FormatOptions
-  { optInput :: !Input
+  { optInputs :: ![Input]
   , optFormat :: !OutputFormat
   , optSort :: !Bool
   , optDedup :: !Bool
@@ -33,13 +32,13 @@ data FormatOptions = FormatOptions
 data Input
   = Stdin
   | File !FilePath
-  deriving Show
+  deriving (Eq, Show)
 
 data OutputFormat
   = TextOutputFormat
   | ZshOutputFormat
   | JSONOutputFormat
-  deriving (Show, Bounded, Enum)
+  deriving (Eq, Show, Bounded, Enum)
 
 
 readInputOptionValue :: ReadM Input
@@ -69,7 +68,7 @@ formatOptionsParser = do
     option (maybeReader readOutputFormatOptionValue) $
     short 'f'
     <> long "format"
-    <> value TextOutputFormat
+    <> value ZshOutputFormat
     <> showDefaultWith showOutputFormatOptionValue
     <> help ("The output format. (values: "
              <> intercalate ", " (showOutputFormatOptionValue <$> [minBound..maxBound])
@@ -84,7 +83,8 @@ formatOptionsParser = do
     short 'd'
     <> long "dedup"
     <> help "Remove duplicate commands, keeping the latest ones."
-  optInput <-
+  optInputs <-
+    some $
     argument readInputOptionValue $
     metavar "INPUT"
     <> value Stdin
@@ -97,7 +97,10 @@ formatOptionsParser = do
 formatOptionsParserInfo :: ParserInfo FormatOptions
 formatOptionsParserInfo =
   info (formatOptionsParser <**> helper) . mconcat $
-  [ progDesc "Print history file entries" ]
+  [ progDesc ("Print history file entries. "
+              <> "Can merge multiple histories by passing multiple file arguments "
+              <> "(this is best done with '--sort').")
+  ]
 
 
 commandParser :: Parser Command
@@ -106,7 +109,6 @@ commandParser =
   . mconcat
   . map (uncurry Options.Applicative.command) $
   [ ("format", Format <$> formatOptionsParserInfo)
-  -- , ("merge", Merge <$> mergeOptionsParserInfo)
   ]
 
 
