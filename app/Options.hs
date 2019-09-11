@@ -84,12 +84,11 @@ formatOptionsParser = do
     <> long "dedup"
     <> help "Remove duplicate commands, keeping the latest ones."
   optInputs <-
-    some $
+    fmap (\xs -> if null xs then [Stdin] else xs) $
+    many $
     argument readInputOptionValue $
     metavar "INPUT"
-    <> value Stdin
-    <> showDefaultWith (const "\"-\"")
-    <> help "Input file, or \"-\" to read from stdin instead"
+    <> help "Input file, or \"-\" to read from stdin instead (default: \"-\")"
     <> action "file"
   pure FormatOptions{..}
 
@@ -99,7 +98,7 @@ formatOptionsParserInfo =
   info (formatOptionsParser <**> helper) . mconcat $
   [ progDesc ("Print history file entries. "
               <> "Can merge multiple histories by passing multiple file arguments "
-              <> "(this is best done with '--sort').")
+              <> "(merging is best done with '--sort').")
   ]
 
 
