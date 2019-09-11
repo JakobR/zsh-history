@@ -1,7 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Zsh.History
-  ( Entry(..)
+  ( Entry'(..)
+  , Entry
   , Command
   -- * Parsing
   , entryP
@@ -15,28 +16,35 @@ module Zsh.History
 import Data.Word
 
 -- attoparsec
-import Data.Attoparsec.Text
+import Data.Attoparsec.ByteString.Char8
 
--- text
-import Data.Text (Text)
-import Data.Text.Lazy.Builder (Builder)
-import qualified Data.Text.Lazy.Builder as Builder
-import qualified Data.Text.Lazy.Builder.Int as Builder
+-- bytestring
+import Data.ByteString (ByteString)
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as Builder
 
 
-data Entry = Entry
+data Entry' a = Entry
   { timestamp :: !Word64
     -- ^ Timestamp when the command was executed
   , duration :: !Word64
     -- ^ How long the command was running, in seconds
-  , command :: !Command
+  , command :: !a
     -- ^ The zsh command without newline at the end.
     -- Contains the intermediate newlines for multiline commands.
   }
-  deriving Show
+  deriving (Functor, Show)
 
 
-type Command = Text
+-- | By default, we use 'ByteString' for commands to be able to work
+-- will ill-formed text, e.g., if shell control characters leak into
+-- the history.
+--
+-- Most uses of this tool don't need to look at the command contents,
+-- so ill-formed commands should just be passed through as-is.
+type Command = ByteString
+
+type Entry = Entry' Command
 
 
 {-
@@ -103,17 +111,17 @@ historyP :: Parser [Entry]
 historyP = many' entryP
 
 
-parseHistory :: Text -> Either String [Entry]
+parseHistory :: ByteString -> Either String [Entry]
 parseHistory = parseOnly (historyP <* endOfInput)
 
 
 renderEntry :: Entry -> Builder
 renderEntry e =
-  Builder.singleton ':'
-  <> Builder.singleton ' '
-  <> Builder.decimal (timestamp e)
-  <> Builder.singleton ':'
-  <> Builder.decimal (duration e)
-  <> Builder.singleton ';'
-  <> Builder.fromText (command e)
-  <> Builder.singleton '\n'
+  Builder.char8 ':'
+  <> Builder.char8 ' '
+  <> Builder.word64Dec (timestamp e)
+  <> Builder.char8 ':'
+  <> Builder.word64Dec (duration e)
+  <> Builder.char8 ';'
+  <> Builder.byteString (command e)
+  <> Builder.char8 '\n'

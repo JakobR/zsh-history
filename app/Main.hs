@@ -9,13 +9,20 @@ import Control.Monad
 import System.Exit (exitFailure)
 import System.IO (hPrint, hPutStrLn, stderr, stdin)
 
+-- bytestring
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import Data.ByteString.Builder (Builder)
+import qualified Data.ByteString.Builder as Builder
+
 -- text
-import Data.Text (Text)
-import qualified Data.Text.IO as Text.IO
-import qualified Data.Text.Lazy.IO as Text.Lazy.IO
-import Data.Text.Lazy.Builder (Builder)
-import qualified Data.Text.Lazy.Builder as Builder
-import qualified Data.Text.Lazy.Builder.Int as Builder
+-- import Data.Text (Text)
+-- import qualified Data.Text.IO as Text.IO
+-- import qualified Data.Text.Lazy.IO as Text.Lazy.IO
+-- import Data.Text.Lazy.Builder (Builder)
+-- import qualified Data.Text.Lazy.Builder as Builder
+-- import qualified Data.Text.Lazy.Builder.Int as Builder
 
 -- time
 import Data.Time.Clock.POSIX
@@ -45,7 +52,7 @@ mainFormat _isDebug options = do
   inputHistory <- abortOnLeft (parseHistory inputData)
   tz <- getCurrentTimeZone
   let output = cmdFormat options tz inputHistory
-  Text.Lazy.IO.putStr (Builder.toLazyText output)
+  BL.putStr (Builder.toLazyByteString output)
 
 
 cmdFormat :: Foldable f => FormatOptions -> TimeZone -> f Entry -> Builder
@@ -61,16 +68,16 @@ renderHistory JSONOutputFormat _ _history = error "not yet implemented"
 
 renderEntryText :: TimeZone -> Entry -> Builder
 renderEntryText tz e =
-  Builder.fromString (formatTime (error "bug: no locale set") "%Y-%m-%d %H:%M:%S" (entryLocalTime e))
-  <> " (" <> Builder.decimal (duration e) <> "s) "
-  <> Builder.fromText (Zsh.History.command e)
+  Builder.stringUtf8 (formatTime (error "bug: no locale set") "%Y-%m-%d %H:%M:%S" (entryLocalTime e))
+  <> " (" <> Builder.word64Dec (duration e) <> "s) "
+  <> Builder.stringUtf8 (show $ Zsh.History.command e)
   where
     entryLocalTime = utcToZonedTime tz . posixSecondsToUTCTime . fromIntegral . timestamp
 
 
-readInput :: Input -> IO Text
-readInput Stdin = Text.IO.hGetContents stdin
-readInput (File path) = Text.IO.readFile path
+readInput :: Input -> IO ByteString
+readInput Stdin = B.hGetContents stdin
+readInput (File path) = B.readFile path
 
 
 abortWithError :: String -> IO a
