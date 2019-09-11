@@ -7,11 +7,10 @@ module Zsh.History
   , parseHistory
   -- * Formatting
   , formatEntry
-  , formatHistory
   ) where
 
 -- base
-import Data.Int
+import Data.Word
 
 -- attoparsec
 import Data.Attoparsec.ByteString.Char8
@@ -21,8 +20,8 @@ import Data.ByteString (ByteString)
 
 
 data Entry = Entry
-  { timestamp :: !Int64
-  , duration :: !Int64
+  { timestamp :: !Word64
+  , duration :: !Word64
   , command :: !Command
   }
   deriving Show
@@ -103,6 +102,3 @@ parseHistory = parseOnly (historyP <* endOfInput)
 
 formatEntry :: Entry -> ByteString
 formatEntry = error "TODO"
-
-formatHistory :: [Entry] -> ByteString
-formatHistory = error "TODO"
