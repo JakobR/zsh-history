@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main
@@ -39,6 +40,11 @@ import qualified Options
 import Zsh.History
 
 
+-- Lists are good enough for now.
+-- We can switch to Vector later if performance turns out to be an issue.
+type History = [Entry]
+
+
 main :: IO ()
 main = do
   options <- parseOptions
@@ -51,31 +57,36 @@ main = do
     Format opts -> mainFormat isDebug opts
 
 
+
+readHistory :: Input -> IO History
+readHistory input = readInput input >>= abortOnLeft . parseHistory
+
 mainFormat :: Bool -> FormatOptions -> IO ()
 mainFormat _isDebug options = do
-  inputData <- readInput (optInput options)
-  inputHistory <- abortOnLeft (parseHistory inputData)
+  inputHistory <- readHistory (optInput options)
   tz <- getCurrentTimeZone
   let output = cmdFormat options tz inputHistory
   BL.putStr (Builder.toLazyByteString output)
 
 
-cmdFormat :: FormatOptions -> TimeZone -> [Entry] -> Builder
-cmdFormat options tz history =
-  renderHistory (optFormat options) tz (processHistory history)
+cmdFormat :: FormatOptions -> TimeZone -> History -> Builder
+cmdFormat FormatOptions{optFormat,optSort,optDedup} tz history =
+  renderHistory optFormat tz (processHistory history)
   where
     processHistory =
-      if' (optSort options) sortHistory
-      . if' (optDedup options) dedupHistory
-
-    sortHistory = sortOn timestamp
-
-    dedupHistory = reverse . nubOrdOn command . reverse
+      if' optSort sortHistory
+      . if' optDedup dedupHistory
 
     if' :: Bool -> (a -> a) -> (a -> a)
     if' True f = f
     if' False _ = id
 
+
+sortHistory :: History -> History
+sortHistory = sortOn timestamp
+
+dedupHistory :: History -> History
+dedupHistory = reverse . nubOrdOn command . reverse
 
 renderHistory :: Foldable f => OutputFormat -> TimeZone -> f Entry -> Builder
 renderHistory TextOutputFormat tz history = foldMap (renderEntryText tz) history
