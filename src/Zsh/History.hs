@@ -15,12 +15,13 @@ module Zsh.History
 import Data.Word
 
 -- attoparsec
-import Data.Attoparsec.ByteString.Char8
+import Data.Attoparsec.Text
 
--- bytestring
-import Data.ByteString (ByteString)
-import Data.ByteString.Builder (Builder)
-import qualified Data.ByteString.Builder as Builder
+-- text
+import Data.Text (Text)
+import Data.Text.Lazy.Builder (Builder)
+import qualified Data.Text.Lazy.Builder as Builder
+import qualified Data.Text.Lazy.Builder.Int as Builder
 
 
 data Entry = Entry
@@ -35,8 +36,7 @@ data Entry = Entry
   deriving Show
 
 
-type Command = ByteString
-
+type Command = Text
 
 
 {-
@@ -103,17 +103,17 @@ historyP :: Parser [Entry]
 historyP = many' entryP
 
 
-parseHistory :: ByteString -> Either String [Entry]
+parseHistory :: Text -> Either String [Entry]
 parseHistory = parseOnly (historyP <* endOfInput)
 
 
 renderEntry :: Entry -> Builder
 renderEntry e =
-  Builder.char8 ':'
-  <> Builder.char8 ' '
-  <> Builder.word64Dec (timestamp e)
-  <> Builder.char8 ':'
-  <> Builder.word64Dec (duration e)
-  <> Builder.char8 ';'
-  <> Builder.byteString (command e)
-  <> Builder.char8 '\n'
+  Builder.singleton ':'
+  <> Builder.singleton ' '
+  <> Builder.decimal (timestamp e)
+  <> Builder.singleton ':'
+  <> Builder.decimal (duration e)
+  <> Builder.singleton ';'
+  <> Builder.fromText (command e)
+  <> Builder.singleton '\n'

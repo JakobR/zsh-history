@@ -5,11 +5,13 @@ import Control.Monad
 import System.Exit (exitFailure)
 import System.IO (hPrint, hPutStrLn, stderr, stdin)
 
--- bytestring
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Builder as Builder
+-- text
+import Data.Text (Text)
+import qualified Data.Text.IO as Text.IO
+import qualified Data.Text.Lazy.IO as Text.Lazy.IO
+-- import Data.Text.Lazy.Builder (Builder)
+import qualified Data.Text.Lazy.Builder as Builder
+-- import qualified Data.Text.Lazy.Builder.Int as Builder
 
 -- time
 import Data.Time.Clock.POSIX
@@ -39,13 +41,14 @@ mainFormat _isDebug options = do
   inputHistory <- abortOnLeft (parseHistory inputData)
   printHistory (format options) inputHistory
 
+
 printHistory :: OutputFormat -> [Entry] -> IO ()
 printHistory TextOutputFormat history = do
   tz <- getCurrentTimeZone
   forM_ history (putStrLn . formatEntryText tz)
 printHistory ZshOutputFormat history = do
   let rendered = mconcat (renderEntry <$> history)
-  BL.putStr (Builder.toLazyByteString rendered)
+  Text.Lazy.IO.putStr (Builder.toLazyText rendered)
 printHistory JSONOutputFormat _history = do
   abortWithError "not yet implemented"
 
@@ -59,9 +62,9 @@ formatEntryText tz e =
     entryLocalTime = utcToZonedTime tz . posixSecondsToUTCTime . fromIntegral . timestamp
 
 
-readInput :: Input -> IO ByteString
-readInput Stdin = B.hGetContents stdin
-readInput (File path) = B.readFile path
+readInput :: Input -> IO Text
+readInput Stdin = Text.IO.hGetContents stdin
+readInput (File path) = Text.IO.readFile path
 
 
 abortWithError :: String -> IO a
