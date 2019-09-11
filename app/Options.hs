@@ -21,14 +21,12 @@ data Command
   -- | Merge !MergeOptions
   deriving Show
 
--- TODO: Add option "--sort" (simply sort by timestamp)
--- TODO: Add option "--dedup" (so we don't actually need a separate dedup command)
---       Keeps latest of duplicate entry (according to order in the files;
---       with --sort according to timestamp order, i.e., sort is performed before dedup)
 -- TODO: Add option "--filter-regex"? might be useful because grep doesn't properly work with multiline commands
 data FormatOptions = FormatOptions
-  { input :: !Input
-  , format :: !OutputFormat
+  { optInput :: !Input
+  , optFormat :: !OutputFormat
+  , optSort :: !Bool
+  , optDedup :: !Bool
   }
   deriving Show
 
@@ -67,7 +65,7 @@ showOutputFormatOptionValue JSONOutputFormat = "json"
 
 formatOptionsParser :: Parser FormatOptions
 formatOptionsParser = do
-  format <-
+  optFormat <-
     option (maybeReader readOutputFormatOptionValue) $
     short 'f'
     <> long "format"
@@ -76,7 +74,17 @@ formatOptionsParser = do
     <> help ("The output format. (values: "
              <> intercalate ", " (showOutputFormatOptionValue <$> [minBound..maxBound])
              <> ")")
-  input <-
+  optSort <-
+    switch $
+    short 's'
+    <> long "sort"
+    <> help "Sort commands by timestamp (this should be a no-op for well-formed history files)."
+  optDedup <-
+    switch $
+    short 'd'
+    <> long "dedup"
+    <> help "Remove duplicate commands, keeping the latest ones."
+  optInput <-
     argument readInputOptionValue $
     metavar "INPUT"
     <> value Stdin
@@ -106,7 +114,7 @@ optionsParser :: Parser Options
 optionsParser = do
   debug <-
     switch $
-    long "--debug"
+    long "debug"
     <> hidden
     <> help "Print debug information on stderr"
   command <- commandParser

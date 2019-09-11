@@ -6,6 +6,7 @@ module Main
 
 -- base
 import Control.Monad
+import Data.List (sortOn)
 import System.Exit (exitFailure)
 import System.IO (hPrint, hPutStrLn, stderr, stdin)
 
@@ -15,6 +16,9 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString.Builder as Builder
+
+-- containers
+import Data.Containers.ListUtils (nubOrdOn)
 
 -- text
 -- import Data.Text (Text)
@@ -30,7 +34,8 @@ import Data.Time.Format
 import Data.Time.LocalTime
 
 -- zsh-history
-import Options
+import Options hiding (command)
+import qualified Options
 import Zsh.History
 
 
@@ -48,16 +53,28 @@ main = do
 
 mainFormat :: Bool -> FormatOptions -> IO ()
 mainFormat _isDebug options = do
-  inputData <- readInput (input options)
+  inputData <- readInput (optInput options)
   inputHistory <- abortOnLeft (parseHistory inputData)
   tz <- getCurrentTimeZone
   let output = cmdFormat options tz inputHistory
   BL.putStr (Builder.toLazyByteString output)
 
 
-cmdFormat :: Foldable f => FormatOptions -> TimeZone -> f Entry -> Builder
-cmdFormat options tz inputHistory =
-  renderHistory (format options) tz inputHistory
+cmdFormat :: FormatOptions -> TimeZone -> [Entry] -> Builder
+cmdFormat options tz history =
+  renderHistory (optFormat options) tz (processHistory history)
+  where
+    processHistory =
+      if' (optSort options) sortHistory
+      . if' (optDedup options) dedupHistory
+
+    sortHistory = sortOn timestamp
+
+    dedupHistory = reverse . nubOrdOn command . reverse
+
+    if' :: Bool -> (a -> a) -> (a -> a)
+    if' True f = f
+    if' False _ = id
 
 
 renderHistory :: Foldable f => OutputFormat -> TimeZone -> f Entry -> Builder
