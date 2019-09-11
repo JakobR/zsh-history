@@ -1,0 +1,7 @@
+: 1404380732:0;mvim tests/test_customer.py
+: 1404380968:0;ag 'code\
+'
+: 1404380978:0;ag "'code"
+: 1404381070:0;ag DELETE
+: 1404383186:0;ag toler
+: 1404384520:0;git merge j3
