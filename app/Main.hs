@@ -10,7 +10,7 @@ import Control.Monad
 import Data.Function ((&))
 import Data.List (sortOn)
 import System.Exit (exitFailure)
-import System.IO (hPrint, hPutStrLn, stderr, stdin)
+import System.IO (withFile, hPrint, hPutStrLn, stderr, stdin, stdout, Handle, IOMode(..))
 
 -- bytestring
 import Data.ByteString (ByteString)
@@ -59,7 +59,7 @@ main = do
 
 
 mainFormat :: Bool -> FormatOptions -> IO ()
-mainFormat _isDebug options@FormatOptions{optInputs,optSort} = do
+mainFormat _isDebug options@FormatOptions{optInputs,optOutput,optSort} = do
 
   when (length (filter (==Stdin) optInputs) > 1) $
     abortWithError "command line argument '-' is allowed at most once"
@@ -75,7 +75,8 @@ mainFormat _isDebug options@FormatOptions{optInputs,optSort} = do
     rendered = formatHistories options tz inputHistories
     output = Builder.toLazyByteString rendered
 
-  BL.putStr output
+  withOutput optOutput $ \handle ->
+    BL.hPutStr handle output
 
 
 formatHistories :: FormatOptions -> TimeZone -> [History] -> Builder
@@ -124,7 +125,12 @@ readHistory input = readInput input >>= abortOnLeft . parseHistory
 
 readInput :: Input -> IO ByteString
 readInput Stdin = B.hGetContents stdin
-readInput (File path) = B.readFile path
+readInput (InFile path) = B.readFile path
+
+
+withOutput :: Output -> (Handle -> IO a) -> IO a
+withOutput Stdout action = action stdout
+withOutput (OutFile path) action = withFile path WriteMode action
 
 
 abortWithError :: String -> IO a

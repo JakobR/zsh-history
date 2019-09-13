@@ -24,6 +24,7 @@ data Command
 data FormatOptions = FormatOptions
   { optInputs :: ![Input]
   , optFormat :: !OutputFormat
+  , optOutput :: !Output
   , optSort :: !Bool
   , optDedup :: !Bool
   }
@@ -31,7 +32,12 @@ data FormatOptions = FormatOptions
 
 data Input
   = Stdin
-  | File !FilePath
+  | InFile !FilePath
+  deriving (Eq, Show)
+
+data Output
+  = Stdout
+  | OutFile !FilePath
   deriving (Eq, Show)
 
 data OutputFormat
@@ -46,7 +52,7 @@ readInputOptionValue = do
   path <- str
   case path of
     "-" -> pure Stdin
-    _ -> pure (File path)
+    _ -> pure (InFile path)
 
 
 readOutputFormatOptionValue :: String -> Maybe OutputFormat
@@ -73,6 +79,13 @@ formatOptionsParser = do
     <> help ("The output format. (values: "
              <> intercalate ", " (showOutputFormatOptionValue <$> [minBound..maxBound])
              <> ")")
+  optOutput <-
+    option (OutFile <$> str) $
+    short 'o'
+    <> long "output"
+    <> value Stdout
+    <> showDefaultWith (const "stdout")
+    <> help "Write output to file"
   optSort <-
     switch $
     short 's'
