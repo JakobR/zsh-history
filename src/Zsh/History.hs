@@ -23,6 +23,9 @@ import Data.ByteString (ByteString)
 import Data.ByteString.Builder (Builder)
 import qualified Data.ByteString.Builder as Builder
 
+-- zsh-history
+import Zsh.Metafy
+
 
 data Entry' a = Entry
   { timestamp :: !Word64
@@ -42,7 +45,7 @@ data Entry' a = Entry
 --
 -- Most uses of this tool don't need to look at the command contents,
 -- so ill-formed commands should just be passed through as-is.
-type Command = ByteString
+type Command = Metafied ByteString
 
 type Entry = Entry' Command
 
@@ -81,7 +84,7 @@ Notes:
 
 
 commandP :: Parser Command
-commandP = scan 0 f <* char '\n'
+commandP = Metafied <$> scan 0 f <* char '\n'
   where
     -- | 'n' counts the number of backlashes immediately before the current character.
     f :: Int -> Char -> Maybe Int
@@ -124,5 +127,5 @@ renderEntry e =
   <> Builder.char8 ':'
   <> Builder.word64Dec (duration e)
   <> Builder.char8 ';'
-  <> Builder.byteString (command e)
+  <> Builder.byteString (getMetafied $ command e)
   <> Builder.char8 '\n'

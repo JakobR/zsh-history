@@ -41,8 +41,6 @@ import qualified Options
 import Zsh.History
 
 
--- Lists are good enough for now.
--- We can switch to Vector later if performance turns out to be an issue.
 type History = [Entry]
 
 
