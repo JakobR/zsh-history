@@ -8,7 +8,7 @@ module Main
 -- base
 import Control.Monad
 import Data.Function ((&))
-import Data.List (sortOn)
+import Data.List (group, sortOn)
 import System.Exit (exitFailure)
 import System.IO (withFile, hPrint, hPutStrLn, stderr, stdin, stdout, Handle, IOMode(..))
 
@@ -80,13 +80,14 @@ mainFormat _isDebug options@FormatOptions{optInputs,optOutput,optSort} = do
 
 
 formatHistories :: FormatOptions -> TimeZone -> [History] -> Builder
-formatHistories FormatOptions{optFormat,optSort,optDedup} tz hs =
+formatHistories FormatOptions{optFormat,optSort,optDedupLite,optDedup} tz hs =
   renderHistory optFormat tz h'
   where
     h' =
       hs
       & concat
       & if' optSort sortHistory
+      & if' optDedupLite dedupLiteHistory
       & if' optDedup dedupHistory
 
     if' :: Bool -> (a -> a) -> (a -> a)
@@ -97,6 +98,10 @@ formatHistories FormatOptions{optFormat,optSort,optDedup} tz hs =
 -- NOTE: be careful to use a stable sort here! (timestamp resolution is only 1s)
 sortHistory :: History -> History
 sortHistory = sortOn timestamp
+
+
+dedupLiteHistory :: History -> History
+dedupLiteHistory = map head . group
 
 
 dedupHistory :: History -> History

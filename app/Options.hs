@@ -27,6 +27,7 @@ data FormatOptions = FormatOptions
   , optOutput :: !Output
   , optSort :: !Bool
   , optDedup :: !Bool
+  , optDedupLite :: !Bool
   }
   deriving Show
 
@@ -96,6 +97,11 @@ formatOptionsParser = do
     short 'd'
     <> long "dedup"
     <> help "Remove duplicate commands, keeping the latest ones."
+  optDedupLite <-
+    switch $
+    long "dedup-lite"
+    <> help ("Remove duplicate consecutive entries "
+             <> "(i.e., where all of timestamp, duration, and command are the same).")
   optInputs <-
     fmap (\xs -> if null xs then [Stdin] else xs) $
     many $
@@ -111,7 +117,7 @@ formatOptionsParserInfo =
   info (formatOptionsParser <**> helper) . mconcat $
   [ progDesc ("Print history file entries. "
               <> "Can merge multiple histories by passing multiple file arguments "
-              <> "(merging is best done with '--sort').")
+              <> "(merging is best done with '--sort' and '--dedup-lite').")
   ]
 
 
