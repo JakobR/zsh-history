@@ -1,0 +1,96 @@
+cabal-version: 3.0
+
+name:           zsh-history
+version:        0.1.0.0
+synopsis:       A command-line tool to manipulate Zsh history files.
+homepage:       https://github.com/JakobR/zsh-history
+bug-reports:    https://github.com/JakobR/zsh-history/issues
+author:         Jakob Rath
+maintainer:     git@jakobrath.eu
+copyright:      Copyright: (c) 2019 Jakob Rath
+license:        GPL-3.0-or-later
+license-file:   LICENSE
+build-type:     Simple
+
+extra-doc-files:
+    README.md
+
+
+common common-options
+  ghc-options:
+      -Wall
+      -Wcompat
+      -Widentities
+      -Wincomplete-record-updates
+      -Wincomplete-uni-patterns
+      -Wredundant-constraints
+      -Wmissing-home-modules
+      -Wpartial-fields
+      -Wnoncanonical-monad-instances
+      -fhide-source-paths
+
+  build-depends:
+      base >=4.12 && <5
+    , bytestring
+    , containers
+    , text
+
+  default-language:
+      Haskell2010
+
+
+library
+  import:
+      common-options
+
+  exposed-modules:
+      Zsh.History
+      Zsh.Metafy
+
+  build-depends:
+      attoparsec
+
+  hs-source-dirs:
+      src
+
+
+executable zsh-history
+  import:
+      common-options
+
+  main-is:
+      Main.hs
+
+  other-modules:
+      Options
+
+  build-depends:
+      optparse-applicative
+    , time
+    , zsh-history
+
+  hs-source-dirs:
+      app
+
+  ghc-options:
+      -threaded -rtsopts -with-rtsopts=-N
+
+
+test-suite zsh-history-test
+  import:
+      common-options
+
+  main-is:
+      Spec.hs
+
+  type:
+      exitcode-stdio-1.0
+
+  build-depends:
+      zsh-history
+
+  hs-source-dirs:
+      test
+
+  ghc-options:
+      -threaded -rtsopts -with-rtsopts=-N

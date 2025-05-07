@@ -1,2 +1,3 @@
-/.stack-work/
-/zsh-history.cabal
+/.direnv/
+/dist-newstyle
+/result
